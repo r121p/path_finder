@@ -170,6 +170,32 @@ def astar(grid, start, end, theta=False):
     # No path found
     return None
 
+def optimize_path(grid, path):
+    """Optimize path by removing unnecessary waypoints when direct line exists"""
+    if not path or len(path) < 3:
+        return path
+        
+    optimized = [path[0]]
+    current_index = 0
+    
+    while current_index < len(path) - 1:
+        # Start checking from furthest point first
+        for next_index in range(len(path)-1, current_index, -1):
+            if line_of_sight(grid, path[current_index], path[next_index]):
+                optimized.append(path[next_index])
+                current_index = next_index
+                break
+        else:
+            # No direct path found, move to next point
+            current_index += 1
+            optimized.append(path[current_index])
+    
+    # Final check for direct path from start to end
+    if len(optimized) > 2 and line_of_sight(grid, optimized[0], optimized[-1]):
+        return [optimized[0], optimized[-1]]
+    
+    return optimized
+
 def image_to_grid(image_path, threshold=200):
     """Convert an image to a grid where pixels < threshold are obstacles
     
@@ -248,15 +274,20 @@ if __name__ == "__main__":
     print("=== Running Theta* Pathfinding ===")
     path = astar(grid, start, end, theta=True)
     
-    # Print detailed path information
-    print("\nTheta* Path Details:")
-    print(f"Path length: {len(path)} steps")
-    print(f"Start: {start}")
-    print(f"End: {end}")
-    print("Path coordinates:")
-    for i, coord in enumerate(path):
-        print(f"Step {i+1}: {coord}")
-    
-    # Visualize path if using image input
-    if input_image and path:
-        draw_path_on_image(input_image, path, "thetastar_result.png")
+    if path:
+        # Optimize the found path
+        optimized_path = optimize_path(grid, path)
+        
+        # Print detailed path information
+        print("\nTheta* Path Details:")
+        print(f"Original path length: {len(path)} steps")
+        print(f"Optimized path length: {len(optimized_path)} steps")
+        print(f"Start: {start}")
+        print(f"End: {end}")
+        print("Optimized path coordinates:")
+        for i, coord in enumerate(optimized_path):
+            print(f"Step {i+1}: {coord}")
+        
+        # Visualize optimized path if using image input
+        if input_image:
+            draw_path_on_image(input_image, optimized_path, "thetastar_result.png")

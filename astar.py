@@ -241,6 +241,22 @@ def reverse_optimize_path(grid, path):
     # Reverse to maintain start-to-end order
     return optimized[::-1]
 
+def multi_pass_optimize(grid, path, passes=5):
+    """Perform alternating forward/reverse optimization passes"""
+    if not path or len(path) < 3:
+        return path
+        
+    optimized = path
+    for i in range(passes):
+        # Forward pass
+        optimized = split_long_segments(optimized)
+        optimized = optimize_path(grid, optimized)
+        # Reverse pass
+        optimized = split_long_segments(optimized)
+        optimized = reverse_optimize_path(grid, optimized)
+        
+    return optimized
+
 def image_to_grid(image_path, threshold=200):
     """Convert an image to a grid where pixels < threshold are obstacles
     
@@ -339,20 +355,12 @@ if __name__ == "__main__":
     path = astar(grid, start, end, theta=True)
     
     if path:
-        # First optimization pass
-        optimized_path = optimize_path(grid, path)
         
-        # Second optimization pass
-        if optimized_path:
-            # Split long segments
-            split_path = split_long_segments(optimized_path)
-            # Reverse optimization
-            final_path = reverse_optimize_path(grid, split_path)
-            
-            # Visualize both paths if using image input
-            if input_image:
-                draw_path_on_image(input_image, path, final_path, "thetastar_comparison.png")
-        input_image = None
+        final_path = multi_pass_optimize(grid, path)
+        
+        # Visualize both paths if using image input
+        if input_image:
+            draw_path_on_image(input_image, path, final_path, "thetastar_comparison.png")
     
     # Example start and end positions
     start = (0, 0)

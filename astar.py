@@ -196,6 +196,51 @@ def optimize_path(grid, path):
     
     return optimized
 
+def split_long_segments(path, max_length=10):
+    """Split path segments longer than max_length into smaller segments"""
+    if not path or len(path) < 2:
+        return path
+        
+    new_path = [path[0]]
+    for i in range(1, len(path)):
+        x1, y1 = path[i-1]
+        x2, y2 = path[i]
+        distance = math.sqrt((x2-x1)**2 + (y2-y1)**2)
+        
+        if distance > max_length:
+            segments = int(distance / max_length) + 1
+            for s in range(1, segments):
+                ratio = s / segments
+                new_x = int(x1 + (x2 - x1) * ratio)
+                new_y = int(y1 + (y2 - y1) * ratio)
+                new_path.append((new_x, new_y))
+        new_path.append(path[i])
+    
+    return new_path
+
+def reverse_optimize_path(grid, path):
+    """Optimize path from end to start"""
+    if not path or len(path) < 3:
+        return path
+        
+    optimized = [path[-1]]
+    current_index = len(path) - 1
+    
+    while current_index > 0:
+        # Start checking from start point first
+        for next_index in range(0, current_index):
+            if line_of_sight(grid, path[next_index], path[current_index]):
+                optimized.append(path[next_index])
+                current_index = next_index
+                break
+        else:
+            # No direct path found, move to previous point
+            current_index -= 1
+            optimized.append(path[current_index])
+    
+    # Reverse to maintain start-to-end order
+    return optimized[::-1]
+
 def image_to_grid(image_path, threshold=200):
     """Convert an image to a grid where pixels < threshold are obstacles
     
@@ -294,19 +339,22 @@ if __name__ == "__main__":
     path = astar(grid, start, end, theta=True)
     
     if path:
-        # Optimize the found path
+        # First optimization pass
         optimized_path = optimize_path(grid, path)
         
-        # Print detailed path information
-        print("\nTheta* Path Details:")
-        print(f"Original path length: {len(path)} steps")
-        print(f"Optimized path length: {len(optimized_path)} steps")
-        print(f"Start: {start}")
-        print(f"End: {end}")
-        print("Optimized path coordinates:")
-        for i, coord in enumerate(optimized_path):
-            print(f"Step {i+1}: {coord}")
-        
-        # Visualize both paths if using image input
-        if input_image:
-            draw_path_on_image(input_image, path, optimized_path, "thetastar_comparison.png")
+        # Second optimization pass
+        if optimized_path:
+            # Split long segments
+            split_path = split_long_segments(optimized_path)
+            # Reverse optimization
+            final_path = reverse_optimize_path(grid, split_path)
+            
+            # Visualize both paths if using image input
+            if input_image:
+                draw_path_on_image(input_image, path, final_path, "thetastar_comparison.png")
+        input_image = None
+    
+    # Example start and end positions
+    start = (0, 0)
+    end = (len(grid)-1, len(grid[0])-1)  # Bottom-right corner
+    

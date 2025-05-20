@@ -221,8 +221,14 @@ def image_to_grid(image_path, threshold=200):
     
     return grid
 
-def draw_path_on_image(image_path, path, output_path="path_result.png"):
-    """Draw the found path on the original image and save to new file
+def draw_path_on_image(image_path, original_path, optimized_path=None, output_path="path_comparison.png"):
+    """Draw paths on the original image and save to new file
+    
+    Args:
+        image_path: Path to original image
+        original_path: List of (x,y) tuples for original path
+        optimized_path: List of (x,y) tuples for optimized path (optional)
+        output_path: Path to save the result image
     
     Args:
         image_path: Path to original image
@@ -234,13 +240,18 @@ def draw_path_on_image(image_path, path, output_path="path_result.png"):
     if img is None:
         raise FileNotFoundError(f"Could not read image at {image_path}")
     
-    # Draw path as red line
-    for i in range(len(path)-1):
-        cv2.line(img, path[i][::-1], path[i+1][::-1], (0, 0, 255), 2)
+    # Draw original path as red line
+    for i in range(len(original_path)-1):
+        cv2.line(img, original_path[i][::-1], original_path[i+1][::-1], (0, 0, 255), 2)
     
-    # Draw start (green) and end (blue) points
-    cv2.circle(img, path[0][::-1], 5, (0, 255, 0), -1)
-    cv2.circle(img, path[-1][::-1], 5, (255, 0, 0), -1)
+    # Draw optimized path as blue line if provided
+    if optimized_path:
+        for i in range(len(optimized_path)-1):
+            cv2.line(img, optimized_path[i][::-1], optimized_path[i+1][::-1], (255, 0, 0), 2)
+    
+    # Draw start (green) and end (blue) points using original path
+    cv2.circle(img, original_path[0][::-1], 5, (0, 255, 0), -1)
+    cv2.circle(img, original_path[-1][::-1], 5, (255, 0, 0), -1)
     
     cv2.imwrite(output_path, img)
     print(f"Saved result to {output_path}")
@@ -288,6 +299,6 @@ if __name__ == "__main__":
         for i, coord in enumerate(optimized_path):
             print(f"Step {i+1}: {coord}")
         
-        # Visualize optimized path if using image input
+        # Visualize both paths if using image input
         if input_image:
-            draw_path_on_image(input_image, optimized_path, "thetastar_result.png")
+            draw_path_on_image(input_image, path, optimized_path, "thetastar_comparison.png")

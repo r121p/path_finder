@@ -111,24 +111,53 @@ def astar(grid, start, end):
     # No path found
     return None
 
-if __name__ == "__main__":
-    # Example usage
-    # 0 = walkable, 1 = obstacle
-    grid = [
-        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    ]
+def image_to_grid(image_path, threshold=200):
+    """Convert an image to a grid where pixels < threshold are obstacles
     
+    Args:
+        image_path: Path to the input image
+        threshold: Pixel value threshold (values below are obstacles)
+    
+    Returns:
+        2D list representing the grid (0=walkable, 1=obstacle)
+    """
+    import cv2
+    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    if img is None:
+        raise FileNotFoundError(f"Could not read image at {image_path}")
+    
+    # Normalize and threshold
+    grid = []
+    for row in img:
+        grid_row = []
+        for pixel in row:
+            grid_row.append(0 if pixel >= threshold else 1)
+        grid.append(grid_row)
+    
+    return grid
+
+if __name__ == "__main__":
+    # Load grid from cost_map.png
+    try:
+        grid = image_to_grid("cost_map.png")
+    except FileNotFoundError:
+        print("Error: cost_map.png not found. Using example grid instead.")
+        grid = [
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ]
+    
+    # Example start and end positions
     start = (0, 0)
-    end = (7, 6)
+    end = (len(grid)-1, len(grid[0])-1)  # Bottom-right corner
     
     path = astar(grid, start, end)
     print("Path found:", path)

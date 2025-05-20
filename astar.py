@@ -240,14 +240,22 @@ def draw_path_on_image(image_path, original_path, optimized_path=None, output_pa
     if img is None:
         raise FileNotFoundError(f"Could not read image at {image_path}")
     
-    # Draw original path as red line
+    # Draw original path as red line with yellow waypoints
     for i in range(len(original_path)-1):
         cv2.line(img, original_path[i][::-1], original_path[i+1][::-1], (0, 0, 255), 2)
+        cv2.circle(img, original_path[i][::-1], 3, (0, 255, 255), -1)  # Yellow waypoint
     
-    # Draw optimized path as blue line if provided
+    # Draw final waypoint for original path
+    cv2.circle(img, original_path[-1][::-1], 3, (0, 255, 255), -1)
+    
+    # Draw optimized path as blue line with cyan waypoints if provided
     if optimized_path:
         for i in range(len(optimized_path)-1):
             cv2.line(img, optimized_path[i][::-1], optimized_path[i+1][::-1], (255, 0, 0), 2)
+            cv2.circle(img, optimized_path[i][::-1], 3, (255, 255, 0), -1)  # Cyan waypoint
+        
+        # Draw final waypoint for optimized path
+        cv2.circle(img, optimized_path[-1][::-1], 3, (255, 255, 0), -1)
     
     # Draw start (green) and end (blue) points using original path
     cv2.circle(img, original_path[0][::-1], 5, (0, 255, 0), -1)

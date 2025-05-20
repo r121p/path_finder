@@ -244,18 +244,19 @@ if __name__ == "__main__":
     start = (0, 0)
     end = (len(grid)-1, len(grid[0])-1)  # Bottom-right corner
     
-    # Run both A* and Theta* for comparison
-    print("=== Running A* ===")
-    path = astar(grid, start, end)
-    print("A* path found:", path)
+    # Run Theta* pathfinding
+    print("=== Running Theta* Pathfinding ===")
+    path = astar(grid, start, end, theta=True)
     
-    print("\n=== Running Theta* ===")
-    theta_path = astar(grid, start, end, theta=True)
-    print("Theta* path found:", theta_path)
+    # Print detailed path information
+    print("\nTheta* Path Details:")
+    print(f"Path length: {len(path)} steps")
+    print(f"Start: {start}")
+    print(f"End: {end}")
+    print("Path coordinates:")
+    for i, coord in enumerate(path):
+        print(f"Step {i+1}: {coord}")
     
-    # Visualize both paths if using image input
-    if input_image:
-        if path:
-            draw_path_on_image(input_image, path, "astar_result.png")
-        if theta_path:
-            draw_path_on_image(input_image, theta_path, "thetastar_result.png")
+    # Visualize path if using image input
+    if input_image and path:
+        draw_path_on_image(input_image, path, "thetastar_result.png")

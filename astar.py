@@ -1,4 +1,5 @@
 import heapq
+import math
 
 class Node:
     def __init__(self, position, parent=None):
@@ -18,11 +19,60 @@ class Node:
         return f"Node({self.position}, g={self.g}, h={self.h}, f={self.f})"
 
 def heuristic(a, b):
-    """Manhattan distance heuristic"""
-    return abs(a[0] - b[0]) + abs(a[1] - b[1])
+    """Euclidean distance heuristic"""
+    return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
 
-def astar(grid, start, end):
-    """A* pathfinding algorithm implementation
+def line_of_sight(grid, a, b):
+    """Check if there's a clear path between two points without obstacles
+    
+    Args:
+        grid: 2D grid representation
+        a: (x1, y1) tuple
+        b: (x2, y2) tuple
+    
+    Returns:
+        True if line of sight exists, False otherwise
+    """
+    x1, y1 = a
+    x2, y2 = b
+    
+    dx = abs(x2 - x1)
+    dy = abs(y2 - y1)
+    x = x1
+    y = y1
+    n = 1 + dx + dy
+    x_inc = 1 if x2 > x1 else -1
+    y_inc = 1 if y2 > y1 else -1
+    error = dx - dy
+    dx *= 2
+    dy *= 2
+    
+    for i in range(n):
+        # Check grid bounds
+        if x < 0 or x >= len(grid) or y < 0 or y >= len(grid[0]):
+            return False
+            
+        # Check if current cell is blocked
+        if grid[x][y] != 0:
+            return False
+            
+        if error > 0:
+            x += x_inc
+            error -= dy
+        elif error < 0:
+            y += y_inc
+            error += dx
+        else:  # Exactly diagonal
+            x += x_inc
+            y += y_inc
+            error -= dy
+            error += dx
+            n -= 1
+    
+    return True
+
+def astar(grid, start, end, theta=False):
+    """Pathfinding algorithm implementation (A* or Theta*)
     
     Args:
         grid: 2D list representing the grid (0=walkable, 1=obstacle)
@@ -91,22 +141,31 @@ def astar(grid, start, end):
                 continue
                 
             # Create the f, g, and h values
-            child.g = current_node.g + 1
+            if theta and current_node.parent:
+                # Theta*: try to connect to grandparent if line of sight exists
+                if line_of_sight(grid, current_node.parent.position, child.position):
+                    new_g = current_node.parent.g + heuristic(current_node.parent.position, child.position)
+                    if new_g < child.g:
+                        child.parent = current_node.parent
+                        child.g = new_g
+                else:
+                    child.g = current_node.g + 1
+            else:
+                # Regular A*
+                child.g = current_node.g + 1
+            
             child.h = heuristic(child.position, end_node.position)
             child.f = child.g + child.h
             
-            # Child is already in the open list and has lower g value
+            # Check if child is already in open list with better g
             found = False
             for open_node in open_list:
-                if child == open_node and child.g > open_node.g:
+                if child == open_node and child.g >= open_node.g:
                     found = True
                     break
             
-            if found:
-                continue
-                
-            # Add the child to the open list
-            heapq.heappush(open_list, child)
+            if not found:
+                heapq.heappush(open_list, child)
     
     # No path found
     return None
@@ -185,9 +244,18 @@ if __name__ == "__main__":
     start = (0, 0)
     end = (len(grid)-1, len(grid[0])-1)  # Bottom-right corner
     
+    # Run both A* and Theta* for comparison
+    print("=== Running A* ===")
     path = astar(grid, start, end)
-    print("Path found:", path)
+    print("A* path found:", path)
     
-    # Draw and save result if we used an image
-    if input_image and path:
-        draw_path_on_image(input_image, path)
+    print("\n=== Running Theta* ===")
+    theta_path = astar(grid, start, end, theta=True)
+    print("Theta* path found:", theta_path)
+    
+    # Visualize both paths if using image input
+    if input_image:
+        if path:
+            draw_path_on_image(input_image, path, "astar_result.png")
+        if theta_path:
+            draw_path_on_image(input_image, theta_path, "thetastar_result.png")

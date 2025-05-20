@@ -136,10 +136,35 @@ def image_to_grid(image_path, threshold=200):
     
     return grid
 
+def draw_path_on_image(image_path, path, output_path="path_result.png"):
+    """Draw the found path on the original image and save to new file
+    
+    Args:
+        image_path: Path to original image
+        path: List of (x,y) tuples representing the path
+        output_path: Path to save the result image
+    """
+    import cv2
+    img = cv2.imread(image_path)
+    if img is None:
+        raise FileNotFoundError(f"Could not read image at {image_path}")
+    
+    # Draw path as red line
+    for i in range(len(path)-1):
+        cv2.line(img, path[i][::-1], path[i+1][::-1], (0, 0, 255), 2)
+    
+    # Draw start (green) and end (blue) points
+    cv2.circle(img, path[0][::-1], 5, (0, 255, 0), -1)
+    cv2.circle(img, path[-1][::-1], 5, (255, 0, 0), -1)
+    
+    cv2.imwrite(output_path, img)
+    print(f"Saved result to {output_path}")
+
 if __name__ == "__main__":
     # Load grid from cost_map.png
     try:
-        grid = image_to_grid("cost_map.png")
+        input_image = "cost_map.png"
+        grid = image_to_grid(input_image)
     except FileNotFoundError:
         print("Error: cost_map.png not found. Using example grid instead.")
         grid = [
@@ -154,6 +179,7 @@ if __name__ == "__main__":
             [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
         ]
+        input_image = None
     
     # Example start and end positions
     start = (0, 0)
@@ -161,3 +187,7 @@ if __name__ == "__main__":
     
     path = astar(grid, start, end)
     print("Path found:", path)
+    
+    # Draw and save result if we used an image
+    if input_image and path:
+        draw_path_on_image(input_image, path)

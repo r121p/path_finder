@@ -1,0 +1,118 @@
+/* Custom styles for Pathfinder Demo */
+
+body {
+    background-color: #f5f5f5;
+}
+
+.card {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    font-weight: bold;
+}
+
+.img-container {
+    position: relative;
+    display: inline-block;
+}
+
+.img-fluid {
+    max-width: 100%;
+    height: auto;
+    border: 1px solid #ddd;
+}
+
+/* Marker styles */
+.marker {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.start-marker {
+    background-color: green;
+}
+
+.end-marker {
+    background-color: red;
+}
+
+/* Path visualization */
+.path-legend {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin: 0 10px;
+}
+
+.legend-color {
+    width: 15px;
+    height: 15px;
+    margin-right: 5px;
+    border-radius: 3px;
+}
+
+.legend-red {
+    background-color: red;
+}
+
+.legend-blue {
+    background-color: blue;
+}
+
+.legend-green {
+    background-color: green;
+}
+
+.legend-yellow {
+    background-color: yellow;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .col-md-6 {
+        margin-bottom: 15px;
+    }
+}
+
+/* Form elements */
+.form-range {
+    cursor: pointer;
+}
+
+.form-check-input {
+    cursor: pointer;
+}
+
+/* Accordion styling */
+.accordion-button:not(.collapsed) {
+    background-color: #e7f1ff;
+    color: #0d6efd;
+}
+
+/* Alert styling */
+.alert {
+    border-radius: 0.25rem;
+}
+
+/* Table styling */
+.table {
+    margin-bottom: 0;
+}
+
+.table-light th {
+    background-color: #f8f9fa;
+}

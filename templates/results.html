@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pathfinding Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-10 offset-md-1">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="text-center">Pathfinding Results</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success">
+                            <h4>Path Found Successfully!</h4>
+                            <p>Algorithm: <strong>{{ algorithm }}</strong></p>
+                            <p>Optimization Passes: <strong>{{ optimize_passes }}</strong></p>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-secondary text-white">
+                                        Path Comparison
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <img src="{{ url_for('serve_results', filename=path_result) }}" class="img-fluid" alt="Path Comparison">
+                                        <div class="mt-2 text-muted">
+                                            <span class="badge bg-danger">Red</span>: Original path
+                                            <span class="badge bg-primary">Blue</span>: Optimized path
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-secondary text-white">
+                                        Smoothed Path
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <img src="{{ url_for('serve_results', filename=smooth_path) }}" class="img-fluid" alt="Smoothed Path">
+                                        <div class="mt-2 text-muted">
+                                            <span class="badge bg-danger">Red</span>: Original path
+                                            <span class="badge bg-primary">Blue</span>: Smoothed path
+                                            <span class="badge bg-success">Green</span>: Distance markers (500cm)
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-secondary text-white">
+                                        Path Statistics
+                                    </div>
+                                    <div class="card-body">
+                                        <table class="table table-bordered">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Metric</th>
+                                                    <th>Original</th>
+                                                    <th>Optimized</th>
+                                                    <th>Improvement</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Path Length</td>
+                                                    <td>{{ original_length }}</td>
+                                                    <td>{{ optimized_length }}</td>
+                                                    <td>
+                                                        {% if length_reduction > 0 %}
+                                                        <span class="text-success">-{{ length_reduction }}%</span>
+                                                        {% else %}
+                                                        <span class="text-danger">+{{ length_reduction|abs }}%</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Waypoints</td>
+                                                    <td>{{ original_waypoints }}</td>
+                                                    <td>{{ optimized_waypoints }}</td>
+                                                    <td>
+                                                        {% if waypoint_reduction > 0 %}
+                                                        <span class="text-success">-{{ waypoint_reduction }}%</span>
+                                                        {% else %}
+                                                        <span class="text-danger">+{{ waypoint_reduction|abs }}%</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header bg-secondary text-white">
+                                        Algorithm Explanation
+                                    </div>
+                                    <div class="card-body">
+                                        {% if algorithm == "Theta*" %}
+                                        <p>Theta* is an any-angle pathfinding algorithm that extends A* by allowing paths to go through any angle, not just along grid lines.</p>
+                                        <p>Key features:</p>
+                                        <ul>
+                                            <li>Uses line-of-sight checks to create smoother paths</li>
+                                            <li>Reduces unnecessary waypoints</li>
+                                            <li>Creates more natural-looking paths</li>
+                                        </ul>
+                                        {% else %}
+                                        <p>A* is a popular pathfinding algorithm that uses a heuristic to guide the search towards the goal.</p>
+                                        <p>Key features:</p>
+                                        <ul>
+                                            <li>Guarantees the shortest path when using an admissible heuristic</li>
+                                            <li>Efficiently explores the search space</li>
+                                            <li>Works well for grid-based movement</li>
+                                        </ul>
+                                        {% endif %}
+                                        <p>The path optimization process removes unnecessary waypoints when a direct line-of-sight exists between non-adjacent points.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ url_for('index') }}" class="btn btn-secondary">Back to Home</a>
+                            <a href="javascript:history.back()" class="btn btn-primary">Try Different Parameters</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

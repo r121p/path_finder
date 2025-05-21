@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configure Pathfinding</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-10 offset-md-1">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="text-center">Configure Pathfinding</h2>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-secondary text-white">
+                                        Original Image
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <div class="position-relative">
+                                            <img src="{{ url_for('serve_uploads', filename=original_image) }}" class="img-fluid" id="originalImage" alt="Original Image">
+                                            <div id="startMarker" class="position-absolute" style="width: 10px; height: 10px; background-color: green; border-radius: 50%; transform: translate(-50%, -50%); display: none;"></div>
+                                            <div id="endMarker" class="position-absolute" style="width: 10px; height: 10px; background-color: red; border-radius: 50%; transform: translate(-50%, -50%); display: none;"></div>
+                                        </div>
+                                        <div class="mt-2 text-muted">Click to set start (green) and end (red) points</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-header bg-secondary text-white">
+                                        Cost Map (with buffer zones)
+                                    </div>
+                                    <div class="card-body text-center">
+                                        <img src="{{ url_for('serve_results', filename=cost_map) }}" class="img-fluid" alt="Cost Map">
+                                        <div class="mt-2 text-muted">Gray areas show buffer zones around obstacles</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form action="{{ url_for('find_path') }}" method="post" id="pathfinderForm">
+                            <input type="hidden" name="original_image" value="{{ original_image }}">
+                            <input type="hidden" name="start_x" id="startX" value="0">
+                            <input type="hidden" name="start_y" id="startY" value="0">
+                            <input type="hidden" name="end_x" id="endX" value="{{ img_width - 1 }}">
+                            <input type="hidden" name="end_y" id="endY" value="{{ img_height - 1 }}">
+
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-secondary text-white">
+                                            Algorithm Settings
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3 form-check">
+                                                <input type="checkbox" class="form-check-input" id="useThetaStar" name="use_theta" checked>
+                                                <label class="form-check-label" for="useThetaStar">Use Theta* (any-angle paths)</label>
+                                                <div class="form-text">Uncheck to use standard A* algorithm</div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="optimizePasses" class="form-label">Optimization Passes</label>
+                                                <input type="range" class="form-range" id="optimizePasses" name="optimize_passes" min="0" max="10" value="5">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>0</span>
+                                                    <span id="optimizeValue">5</span>
+                                                    <span>10</span>
+                                                </div>
+                                                <div class="form-text">Number of optimization passes (0 = no optimization)</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card">
+                                        <div class="card-header bg-secondary text-white">
+                                            Start and End Points
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">Start Point</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">X:</span>
+                                                    <input type="number" class="form-control" id="startXDisplay" value="0" min="0" max="{{ img_width - 1 }}">
+                                                    <span class="input-group-text">Y:</span>
+                                                    <input type="number" class="form-control" id="startYDisplay" value="0" min="0" max="{{ img_height - 1 }}">
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">End Point</label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">X:</span>
+                                                    <input type="number" class="form-control" id="endXDisplay" value="{{ img_width - 1 }}" min="0" max="{{ img_width - 1 }}">
+                                                    <span class="input-group-text">Y:</span>
+                                                    <input type="number" class="form-control" id="endYDisplay" value="{{ img_height - 1 }}" min="0" max="{{ img_height - 1 }}">
+                                                </div>
+                                            </div>
+                                            <div class="alert alert-info">
+                                                <small>You can set points by clicking on the image or entering coordinates manually</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between mt-4">
+                                <a href="{{ url_for('index') }}" class="btn btn-secondary">Back to Home</a>
+                                <button type="submit" class="btn btn-primary">Find Path</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Update optimization passes value display
+        const optimizeSlider = document.getElementById('optimizePasses');
+        const optimizeValue = document.getElementById('optimizeValue');
+        
+        optimizeSlider.addEventListener('input', function() {
+            optimizeValue.textContent = this.value;
+        });
+
+        // Handle image clicks for setting start and end points
+        const originalImage = document.getElementById('originalImage');
+        const startMarker = document.getElementById('startMarker');
+        const endMarker = document.getElementById('endMarker');
+        const startX = document.getElementById('startX');
+        const startY = document.getElementById('startY');
+        const endX = document.getElementById('endX');
+        const endY = document.getElementById('endY');
+        const startXDisplay = document.getElementById('startXDisplay');
+        const startYDisplay = document.getElementById('startYDisplay');
+        const endXDisplay = document.getElementById('endXDisplay');
+        const endYDisplay = document.getElementById('endYDisplay');
+
+        let isSettingStart = true;
+
+        originalImage.addEventListener('click', function(e) {
+            const rect = this.getBoundingClientRect();
+            const x = Math.round(e.clientX - rect.left);
+            const y = Math.round(e.clientY - rect.top);
+            
+            // Scale coordinates to actual image dimensions
+            const scaleX = this.naturalWidth / this.width;
+            const scaleY = this.naturalHeight / this.height;
+            const scaledX = Math.round(x * scaleX);
+            const scaledY = Math.round(y * scaleY);
+            
+            if (isSettingStart) {
+                // Set start point
+                startX.value = scaledX;
+                startY.value = scaledY;
+                startXDisplay.value = scaledX;
+                startYDisplay.value = scaledY;
+                startMarker.style.left = x + 'px';
+                startMarker.style.top = y + 'px';
+                startMarker.style.display = 'block';
+                isSettingStart = false;
+            } else {
+                // Set end point
+                endX.value = scaledX;
+                endY.value = scaledY;
+                endXDisplay.value = scaledX;
+                endYDisplay.value = scaledY;
+                endMarker.style.left = x + 'px';
+                endMarker.style.top = y + 'px';
+                endMarker.style.display = 'block';
+                isSettingStart = true;
+            }
+        });
+
+        // Update hidden inputs when display inputs change
+        startXDisplay.addEventListener('change', function() {
+            startX.value = this.value;
+            updateMarkerPosition(startMarker, startXDisplay.value, startYDisplay.value);
+        });
+
+        startYDisplay.addEventListener('change', function() {
+            startY.value = this.value;
+            updateMarkerPosition(startMarker, startXDisplay.value, startYDisplay.value);
+        });
+
+        endXDisplay.addEventListener('change', function() {
+            endX.value = this.value;
+            updateMarkerPosition(endMarker, endXDisplay.value, endYDisplay.value);
+        });
+
+        endYDisplay.addEventListener('change', function() {
+            endY.value = this.value;
+            updateMarkerPosition(endMarker, endXDisplay.value, endYDisplay.value);
+        });
+
+        function updateMarkerPosition(marker, x, y) {
+            const scaleX = originalImage.width / originalImage.naturalWidth;
+            const scaleY = originalImage.height / originalImage.naturalHeight;
+            marker.style.left = (x * scaleX) + 'px';
+            marker.style.top = (y * scaleY) + 'px';
+            marker.style.display = 'block';
+        }
+
+        // Initialize markers at default positions
+        window.addEventListener('load', function() {
+            // Set initial start point (top-left)
+            updateMarkerPosition(startMarker, startX.value, startY.value);
+            
+            // Set initial end point (bottom-right)
+            updateMarkerPosition(endMarker, endX.value, endY.value);
+        });
+    </script>
+</body>
+</html>

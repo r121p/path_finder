@@ -8,9 +8,9 @@ def main():
     
     # Load path data
     try:
-        path_data = np.load('path_data.npy')
+        path_data = np.load('path_data_with_speeds.npy')
     except FileNotFoundError:
-        print("Error: path_data.npy not found")
+        print("Error: path_data_with_speeds.npy not found")
         sys.exit(1)
         
     # Create a window
@@ -60,8 +60,8 @@ def main():
         screen.fill(BACKGROUND)
         
         # Verify path data shape
-        if path_data.shape[1] != 5:
-            print(f"Error: Expected 5 columns in path_data, got {path_data.shape[1]}")
+        if path_data.shape[1] != 6:
+            print(f"Error: Expected 6 columns in path_data, got {path_data.shape[1]}")
             pygame.quit()
             sys.exit(1)
             
@@ -90,7 +90,8 @@ def main():
                 f"Position: ({point[0]:.2f}, {point[1]:.2f})",
                 f"Curvature: {point[2]:.4f}",
                 f"Heading: {point[3]:.2f}°",
-                f"Distance from start: {point[4]:.2f}"
+                f"Distance from start: {point[4]:.2f}",
+                f"Speed limit: {point[5]:.2f}"
             ]
             
             y_offset = 10

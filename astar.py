@@ -222,8 +222,10 @@ if __name__ == "__main__":
     path = pathfinder.find_path(grid, start, end)
     
     if path:
+        print("Optimizing path")
         final_path = multi_pass_optimize(grid, path)
-        
+        with open('path.txt','w') as f:
+            f.write(str(final_path))
         # Visualize both paths if using image input
         if input_image:
             draw_path_on_image(input_image, path, final_path, "thetastar_comparison.png")

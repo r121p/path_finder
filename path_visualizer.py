@@ -1,6 +1,7 @@
 import numpy as np
 import pygame
 import sys
+from path_navigator import PathNavigator
 
 def main():
     # Initialize pygame
@@ -38,9 +39,13 @@ def main():
     # Font for displaying info
     font = pygame.font.SysFont('Arial', 16)
     
+    # Initialize path navigator
+    navigator = PathNavigator()
+    
     # Main loop
     running = True
     selected_point = None
+    nav_info = None
     
     while running:
         for event in pygame.event.get():
@@ -55,6 +60,10 @@ def main():
                     py = point[1] * scale + offset_y
                     distances.append((mouse_x - px)**2 + (mouse_y - py)**2)
                 selected_point = np.argmin(distances)
+                # Convert mouse coords to path coords before testing navigator
+                path_x = (mouse_x - offset_x) / scale
+                path_y = (mouse_y - offset_y) / scale
+                nav_info = navigator.update_position(path_x, path_y)
         
         # Clear screen
         screen.fill(BACKGROUND)
@@ -91,7 +100,14 @@ def main():
                 f"Curvature: {point[2]:.4f}",
                 f"Heading: {point[3]:.2f}°",
                 f"Distance from start: {point[4]:.2f}",
-                f"Speed limit: {point[5]:.2f}"
+                f"Speed limit: {point[5]:.2f}",
+                "",
+                "Path Navigator Info:",
+                f"Distance from start: {nav_info['distance_from_start']:.2f}" if nav_info else "N/A",
+                f"Heading: {nav_info['heading']:.2f}°" if nav_info else "N/A",
+                f"Speed limit: {nav_info['speed_limit']:.2f}" if nav_info else "N/A",
+                f"Path offset: {nav_info['path_offset']:.2f}" if nav_info else "N/A",
+                f"Is last point: {nav_info['is_last_point']}" if nav_info else "N/A"
             ]
             
             y_offset = 10

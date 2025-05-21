@@ -102,8 +102,9 @@ def smooth_path(segments, distance=50):
     return smoothed
 
 def calculate_curvature(points):
-    """Calculate curvature for each point (except endpoints)"""
+    """Calculate curvature and heading for each point (except last)"""
     curvatures = []
+    headings = []
     distances = []
     cumulative_distance = 0.0
     
@@ -113,49 +114,107 @@ def calculate_curvature(points):
         distances.append(dist)
         cumulative_distance += dist
     
-    # Calculate curvature for each point (except first and last)
-    for i in range(1, len(points)-1):
-        # Get vectors to adjacent points
-        prev_point = np.array(points[i-1])
+    # Calculate heading and curvature for each point
+    for i in range(len(points)-1):
+        # Calculate heading to next point
         curr_point = np.array(points[i])
         next_point = np.array(points[i+1])
+        vec = next_point - curr_point
+        heading = degrees(atan2(vec[1], vec[0])) % 360
+        headings.append(heading)
         
-        # Calculate headings
-        vec1 = curr_point - prev_point
-        vec2 = next_point - curr_point
-        heading1 = atan2(vec1[1], vec1[0])
-        heading2 = atan2(vec2[1], vec2[0])
-        
-        # Calculate angle change (curvature)
-        angle_change = degrees(heading2 - heading1) % 360
-        if angle_change > 180:
-            angle_change -= 360
-        
-        # Normalize by segment lengths
-        avg_dist = (distances[i-1] + distances[i]) / 2
-        curvature = angle_change / avg_dist if avg_dist > 0 else 0
-        curvatures.append(curvature)
+        # Calculate curvature (except first and last points)
+        if 0 < i < len(points)-2:
+            prev_point = np.array(points[i-1])
+            vec1 = curr_point - prev_point
+            vec2 = next_point - curr_point
+            heading1 = atan2(vec1[1], vec1[0])
+            heading2 = atan2(vec2[1], vec2[0])
+            
+            angle_change = degrees(heading2 - heading1) % 360
+            if angle_change > 180:
+                angle_change -= 360
+            
+            avg_dist = (distances[i-1] + distances[i]) / 2
+            curvature = angle_change / avg_dist if avg_dist > 0 else 0
+            curvatures.append(curvature)
     
-    return curvatures, distances
+    return curvatures, headings, distances
+
+def save_path_data(points, filename='path_data.npy'):
+    """Save path data as numpy array with x,y,curvature,heading,distance"""
+    curvatures, headings, segment_distances = calculate_curvature(points)
+    
+    # Prepare data structure
+    path_data = []
+    cumulative_distance = 0.0
+    
+    for i in range(len(points)-1):  # Exclude last point since it has no next point
+        point = points[i]
+        if i == 0:
+            # First point has no curvature
+            curvature = 0.0
+        elif i < len(curvatures)+1:
+            curvature = curvatures[i-1]
+        else:
+            # Last point case (shouldn't happen due to range)
+            curvature = 0.0
+            
+        path_data.append([
+            point[0],  # x
+            point[1],  # y
+            curvature,
+            headings[i],
+            cumulative_distance
+        ])
+        
+        if i < len(segment_distances):
+            cumulative_distance += segment_distances[i]
+    
+    # Convert to numpy array and save
+    np.save(filename, np.array(path_data, dtype=np.float32))
+    return np.array(path_data)
 
 def plot_curvature_analysis(points, output_path='curvature_analysis.png'):
-    """Plot curvature vs distance along path"""
-    curvatures, segment_distances = calculate_curvature(points)
+    """Plot curvature vs distance along path with moving averages"""
+    path_data = save_path_data(points, 'path_data.npy')
+    # Get matching curvature and distance data
+    curvatures = path_data[1:-1, 2]  # Exclude first and last points
+    dists = path_data[1:-1, 4]      # Exclude first and last points
     
-    # Calculate cumulative distances for each point (excluding first and last)
-    cumulative_distances = []
-    current_dist = 0.0
-    for i in range(1, len(points)-1):
-        current_dist += segment_distances[i-1]
-        cumulative_distances.append(current_dist)
+    # Get cumulative distances from path_data (excluding first and last points)
+    cumulative_distances = path_data[1:-1, 4]
     
-    plt.figure(figsize=(10, 6))
-    plt.plot(cumulative_distances, curvatures, 'b-')
+    # Convert to numpy arrays for processing
+    dists = np.array(cumulative_distances)
+    curves = np.array(curvatures)
+    
+    # Calculate moving averages with different window sizes
+    def moving_average(x, window_cm):
+        if len(dists) < 2:
+            return x
+        avg_point_spacing = np.mean(np.diff(dists))
+        window_size = max(1, int(window_cm / avg_point_spacing))
+        weights = np.ones(window_size) / window_size
+        return np.convolve(x, weights, mode='same')
+    
+    plt.figure(figsize=(12, 7))
+    
+    # Plot raw curvature
+    plt.plot(dists, curves, 'b-', alpha=0.3, label='Raw Curvature')
+    
+    # Plot moving averages
+    for window, color in [(3, 'g'), (5, 'r'), (10, 'm'), (20, 'c')]:
+        smoothed = moving_average(curves, window)
+        plt.plot(dists, smoothed, '-', label=f'{window}cm MA', color=color)
+    
     plt.xlabel('Distance from start (cm)')
     plt.ylabel('Curvature (degrees/cm)')
-    plt.title('Path Curvature Analysis')
+    plt.title('Path Curvature Analysis with Moving Averages')
     plt.grid(True)
-    plt.savefig(output_path)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300)
     plt.close()
 
 def plot_path(segments, output_path='path_visualization.png'):

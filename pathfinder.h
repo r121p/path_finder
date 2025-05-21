@@ -14,11 +14,6 @@ public:
     // Core pathfinding function (Theta* variant)
     static Path findPath(const Grid& grid, const Point& start, const Point& end);
 
-    // Path optimization functions
-    static Path optimizePath(const Grid& grid, const Path& path);
-    static Path reverseOptimizePath(const Grid& grid, const Path& path);
-    static std::vector<Point> splitLongSegments(const Path& path, float max_length = 10);
-    static Path multiPassOptimize(const Grid& grid, const Path& path, int passes = 5);
 
 private:
     // Helper functions

@@ -15,8 +15,4 @@ PYBIND11_MODULE(pathfinder, m) {
         }, py::keep_alive<0, 1>());
 
     m.def("find_path", &PathFinder::findPath, "Theta* pathfinding algorithm");
-    m.def("optimize_path", &PathFinder::optimizePath, "Optimize path by removing unnecessary waypoints");
-    m.def("reverse_optimize_path", &PathFinder::reverseOptimizePath, "Optimize path from end to start");
-    m.def("split_long_segments", &PathFinder::splitLongSegments, "Split path segments longer than max_length");
-    m.def("multi_pass_optimize", &PathFinder::multiPassOptimize, "Perform alternating forward/reverse optimization passes");
 }

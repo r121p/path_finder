@@ -1,15 +1,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def calculate_speed_limits(path_data, max_speed, min_speed, max_turning_speed_rad_s, window_size_cm=50):
+def calculate_speed_limits(path_data, max_speed, min_speed, max_turning_speed_rad_s,
+                          max_accel, max_decel, window_size_cm=50):
     """
-    Calculate speed limits for each point in path data.
+    Calculate speed limits for each point in path data considering curvature, acceleration and deceleration.
     
     Args:
         path_data: numpy array of shape (n,5) containing [x,y,curvature,heading,distance]
         max_speed: maximum allowed speed (cm/s)
         min_speed: minimum allowed speed (cm/s)
         max_turning_speed_rad_s: maximum angular speed (radians/second)
+        max_accel: maximum acceleration (cm/s²)
+        max_decel: maximum deceleration (cm/s²) (positive value)
         window_size_cm: size of moving average window in cm (default: 50)
         
     Returns:
@@ -41,6 +44,21 @@ def calculate_speed_limits(path_data, max_speed, min_speed, max_turning_speed_ra
     # Clip speeds between min and max
     speed_limits = np.clip(speed_limits, min_speed, max_speed)
     
+    # Apply acceleration constraints (forward pass)
+    distances = path_data[:, 4]
+    speed_limits[0] = min_speed  # Start at min speed
+    
+    for i in range(1, len(speed_limits)):
+        max_speed_from_accel = np.sqrt(speed_limits[i-1]**2 + 2 * max_accel * (distances[i] - distances[i-1]))
+        speed_limits[i] = min(speed_limits[i], max_speed_from_accel)
+    
+    # Apply deceleration constraints (backward pass)
+    speed_limits[-1] = min_speed  # End at min speed
+    
+    for i in range(len(speed_limits)-2, -1, -1):
+        max_speed_from_decel = np.sqrt(speed_limits[i+1]**2 + 2 * max_decel * (distances[i+1] - distances[i]))
+        speed_limits[i] = min(speed_limits[i], max_speed_from_decel)
+    
     # Add speed limit as new column
     return np.column_stack((path_data, speed_limits))
 
@@ -67,9 +85,12 @@ if __name__ == "__main__":
     MAX_SPEED = 100  # cm/s
     MIN_SPEED = 20   # cm/s
     MAX_TURNING_SPEED_RAD_S = 1.0  # rad/s
+    MAX_ACCEL = 20  # cm/s²
+    MAX_DECEL = 30  # cm/s² (positive value)
     
     # Calculate and add speed limits
-    path_data_with_speeds = calculate_speed_limits(path_data, MAX_SPEED, MIN_SPEED, MAX_TURNING_SPEED_RAD_S, 50)
+    path_data_with_speeds = calculate_speed_limits(path_data, MAX_SPEED, MIN_SPEED,
+                                                 MAX_TURNING_SPEED_RAD_S, MAX_ACCEL, MAX_DECEL, 50)
     
     # Save the enhanced data
     np.save("path_data_with_speeds.npy", path_data_with_speeds)

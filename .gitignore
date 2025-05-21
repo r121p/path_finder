@@ -2,3 +2,4 @@
 *.png
 *.so
 build/
+*.npy

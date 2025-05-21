@@ -4,3 +4,4 @@ pybind11==2.13.6
 scipy==1.15.3
 setuptools==80.8.0
 pygame==2.5.2
+matplotlib==3.8.4

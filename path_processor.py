@@ -1,6 +1,8 @@
 import math
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
+from math import atan2, degrees
 
 # Global configuration
 CELL_SIZE = 5  # cm per grid cell
@@ -99,6 +101,63 @@ def smooth_path(segments, distance=50):
     
     return smoothed
 
+def calculate_curvature(points):
+    """Calculate curvature for each point (except endpoints)"""
+    curvatures = []
+    distances = []
+    cumulative_distance = 0.0
+    
+    # Calculate segment distances and cumulative distance
+    for i in range(1, len(points)):
+        dist = np.linalg.norm(np.array(points[i]) - np.array(points[i-1]))
+        distances.append(dist)
+        cumulative_distance += dist
+    
+    # Calculate curvature for each point (except first and last)
+    for i in range(1, len(points)-1):
+        # Get vectors to adjacent points
+        prev_point = np.array(points[i-1])
+        curr_point = np.array(points[i])
+        next_point = np.array(points[i+1])
+        
+        # Calculate headings
+        vec1 = curr_point - prev_point
+        vec2 = next_point - curr_point
+        heading1 = atan2(vec1[1], vec1[0])
+        heading2 = atan2(vec2[1], vec2[0])
+        
+        # Calculate angle change (curvature)
+        angle_change = degrees(heading2 - heading1) % 360
+        if angle_change > 180:
+            angle_change -= 360
+        
+        # Normalize by segment lengths
+        avg_dist = (distances[i-1] + distances[i]) / 2
+        curvature = angle_change / avg_dist if avg_dist > 0 else 0
+        curvatures.append(curvature)
+    
+    return curvatures, distances
+
+def plot_curvature_analysis(points, output_path='curvature_analysis.png'):
+    """Plot curvature vs distance along path"""
+    curvatures, segment_distances = calculate_curvature(points)
+    
+    # Calculate cumulative distances for each point (excluding first and last)
+    cumulative_distances = []
+    current_dist = 0.0
+    for i in range(1, len(points)-1):
+        current_dist += segment_distances[i-1]
+        cumulative_distances.append(current_dist)
+    
+    plt.figure(figsize=(10, 6))
+    plt.plot(cumulative_distances, curvatures, 'b-')
+    plt.xlabel('Distance from start (cm)')
+    plt.ylabel('Curvature (degrees/cm)')
+    plt.title('Path Curvature Analysis')
+    plt.grid(True)
+    plt.savefig(output_path)
+    plt.close()
+
 def plot_path(segments, output_path='path_visualization.png'):
     try:
         img = cv2.imread('ocupancy.png')
@@ -154,6 +213,11 @@ def main():
     
     if plot_path(segments):
         print(f"Successfully saved path visualization to path_visualization.png (using CELL_SIZE={CELL_SIZE}cm)")
+        
+        # Perform curvature analysis on smoothed path
+        smoothed = smooth_path(segments, 50)
+        plot_curvature_analysis(smoothed, 'curvature_analysis.png')
+        print("Successfully saved curvature analysis to curvature_analysis.png")
     else:
         print("Failed to create path visualization")
 

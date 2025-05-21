@@ -75,24 +75,55 @@ def process_path(waypoints):
     
     return segments
 
+def smooth_path(segments, distance=50):
+    """Generate smoothed path by averaging positions of two walkers"""
+    smoothed = []
+    lead = PathWalker(segments)
+    trail = PathWalker(segments)
+    
+    # Move leading walker ahead by specified distance
+    lead.move(distance)
+    
+    while lead.get_distance_traveled() < (segments[-1]['distance_from_start'] + segments[-1]['length']):
+        # Get current positions
+        lead_pos = np.array(lead.get_current_position())
+        trail_pos = np.array(trail.get_current_position())
+        
+        # Calculate and store median point
+        median = tuple((lead_pos + trail_pos) / 2)
+        smoothed.append(median)
+        
+        # Move both walkers forward
+        lead.move(1)
+        trail.move(1)
+    
+    return smoothed
+
 def plot_path(segments, output_path='path_visualization.png'):
     try:
         img = cv2.imread('ocupancy.png')
         if img is None:
             raise FileNotFoundError("Could not load ocupancy.png")
         
-        # Draw path lines
+        # Draw original path lines
         for segment in segments:
             start = (int(segment['start'][1]/CELL_SIZE), int(segment['start'][0]/CELL_SIZE))
             end = (int(segment['end'][1]/CELL_SIZE), int(segment['end'][0]/CELL_SIZE))
             cv2.line(img, start, end, (0, 0, 255), 2)  # Red lines
+        
+        # Draw smoothed path
+        smoothed = smooth_path(segments, 50)
+        for i in range(len(smoothed)-1):
+            start = (int(smoothed[i][1]/CELL_SIZE), int(smoothed[i][0]/CELL_SIZE))
+            end = (int(smoothed[i+1][1]/CELL_SIZE), int(smoothed[i+1][0]/CELL_SIZE))
+            cv2.line(img, start, end, (255, 0, 0), 2)  # Blue lines
         
         # Create walker and plot positions every 500cm
         walker = PathWalker(segments)
         total_length = segments[-1]['distance_from_start'] + segments[-1]['length']
         
         for distance in range(0, int(total_length)+500, 500):
-            # Reset walker for accurate incremental movement
+            # Plot verification dots on original path
             walker = PathWalker(segments)
             walker.move(distance)
             pos = walker.get_current_position()
